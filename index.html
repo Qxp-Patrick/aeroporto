@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voz Luno - Prática Aeroporto</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f4f8;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #2c3e50;
+            color: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .card {
+            background: white;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            border-left: 5px solid #3498db;
+        }
+        .frase-es {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 10px;
+            display: block;
+        }
+        .btn-mic {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: background 0.3s;
+        }
+        .btn-mic:active {
+            background-color: #2980b9;
+        }
+        .btn-mic.listening {
+            background-color: #e74c3c;
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.7; }
+            100% { opacity: 1; }
+        }
+        .traduccion {
+            margin-top: 15px;
+            font-style: italic;
+            color: #7f8c8d;
+            display: none;
+            border-top: 1px solid #eee;
+            padding-top: 10px;
+        }
+        .feedback {
+            margin-top: 10px;
+            font-family: monospace;
+            font-size: 1.1em;
+            line-height: 1.6;
+        }
+        .correct { color: #27ae60; font-weight: bold; }
+        .incorrect { color: #e67e22; font-weight: bold; text-decoration: underline; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <h1>Voz Luno</h1>
+        <p>Pratique Conversação em Espanhol</p>
+    </div>
+
+    <div id="lista-frases"></div>
+</div>
+
+<script>
+    const frases = [['¿Dónde está el mostrador de la aerolínea?', 'Onde fica o balcão da companhia aérea?'], ['Quisiera hacer el check-in, por favor.', 'Gostaria de fazer o check-in, por favor.'], ['Aquí tiene mi pasaporte y mi reserva.', 'Aqui está meu passaporte e minha reserva.'], ['¿A qué hora sale el vuelo?', 'A que horas sai o voo?'], ['¿El vuelo está a tiempo o tiene retraso?', 'O voo está no horário ou tem atraso?'], ['¿Cuántas maletas puedo facturar?', 'Quantas malas posso despachar?'], ['Solo tengo equipaje de mano.', 'Tenho apenas bagagem de mão.'], ['Tengo que facturar esta maleta.', 'Tenho que despachar esta mala.'], ['¿Tengo que pagar por exceso de equipaje?', 'Tenho que pagar por excesso de bagagem?'], ['¿Me puede dar un asiento de pasillo o ventana?', 'Pode me dar um assento no corredor ou janela?'], ['¿Dónde está mi puerta de embarque?', 'Onde é o meu portão de embarque?'], ['Aquí tiene su tarjeta de embarque.', 'Aqui está o seu cartão de embarque.'], ['Por favor, ponga sus pertenencias en la bandeja.', 'Por favor, coloque seus pertences na bandeja.'], ['¿Tengo que quitarme los zapatos y el cinturón?', 'Tenho que tirar os sapatos e o cinto?'], ['Saque los aparatos electrónicos de la maleta.', 'Tire os aparelhos eletrônicos da mala.'], ['¿Lleva algún líquido en su equipaje?', 'Leva algum líquido na sua bagagem?'], ['¿Cuál es el motivo de su viaje?', 'Qual é o motivo da sua viagem?'], ['Vengo de vacaciones o por negocios.', 'Vim de férias ou a negócios.'], ['¿Cuánto tiempo se va a quedar en el país?', 'Quanto tempo vai ficar no país?'], ['Me quedaré por una semana.', 'Ficarei por uma semana.'], ['¿Dónde se va a hospedar?', 'Onde você vai se hospedar?'], ['Tengo una reserva en este hotel.', 'Tenho uma reserva neste hotel.'], ['¿Dónde están los servicios o aseos?', 'Onde ficam os banheiros?'], ['¿Hay alguna red de Wi-Fi gratuita?', 'Tem alguma rede Wi-Fi gratuita?'], ['¿Dónde puedo cambiar dinero?', 'Onde posso trocar dinheiro?'], ['El vuelo con destino a Madrid ha sido cancelado.', 'O voo com destino a Madri foi cancelado.'], ['Última llamada para el vuelo uno dos tres.', 'Última chamada para o voo 123.'], ['¿Ya empezó el embarque?', 'O que o embarque já começou?'], ['Tengo una escala en Bogotá.', 'Tenho uma escala em Bogotá.'], ['¿Tengo que recoger mi maleta en la escala?', 'Tenho que retirar minha mala na escala?'], ['Mi vuelo de conexión sale en una hora.', 'Meu voo de conexão sai em uma hora.'], ['¿Podría ayudarme con mi maleta, por favor?', 'Poderia me ajudar com minha mala, por favor?'], ['Este es mi asiento.', 'Este é o meu assento.'], ['¿Puedo cambiar de asiento?', 'Posso trocar de assento?'], ['Por favor, abróchense los cinturones.', 'Por favor, apertem os cintos.'], ['Ponga su móvil en modo avión.', 'Coloque seu celular no modo avião.'], ['¿Me puede dar una manta o almohada?', 'Pode me dar um cobertor/travesseiro?'], ['¿A qué hora aterrizaremos?', 'A que horas vamos aterrissar?'], ['¿Qué desea para beber?', 'O que deseja para beber?'], ['¿Tienen alguna opción vegetariana?', 'Vocês têm alguma opção vegetariana?'], ['Agua sin gas, por favor.', 'Água sem gás, por favor.'], ['¿Dónde está la recogida de equipajes?', 'Onde é a retirada de bagagens?'], ['¿En qué cinta sale mi vuelo?', 'Em qual esteira sai o meu voo?'], ['Mi maleta no ha salido.', 'Minha mala não saiu.'], ['Mi equipaje está dañado.', 'Minha bagagem está danificada.'], ['¿Dónde puedo hacer una reclamación?', 'Onde posso fazer uma reclamação?'], ['¿Dónde puedo tomar un taxi o Uber?', 'Onde posso pegar um táxi/Uber?'], ['¿Hay una parada de autobús o metro cerca?', 'Tem um ponto de ônibus ou metrô perto?'], ['¿Cuánto cuesta ir hasta el centro?', 'Quanto custa ir até o centro?'], ['Bienvenido a nuestro país.', 'Bem-vindo ao nosso país!']];
+
+    const listaContainer = document.getElementById('lista-frases');
+
+    function normalizar(texto) {
+        return texto.toLowerCase()
+            .replace(/[¿?¡!.,]/g, "")
+            .normalize("NFD").replace(/[̀-ͯ]/g, "")
+            .trim();
+    }
+
+    function comparar(original, falado, feedbackId, tradId) {
+        const originalWords = original.split(' ');
+        const faladoWords = normalizar(falado).split(' ');
+        
+        let htmlResultado = "";
+        
+        originalWords.forEach(word => {
+            const wordClean = normalizar(word);
+            if (faladoWords.includes(wordClean)) {
+                htmlResultado += `<span class="correct">${word}</span> `;
+            } else {
+                htmlResultado += `<span class="incorrect">${word}</span> `;
+            }
+        });
+
+        document.getElementById(feedbackId).innerHTML = htmlResultado;
+        document.getElementById(tradId).style.display = 'block';
+    }
+
+    frases.forEach((par, index) => {
+        const es = par[0];
+        const pt = par[1];
+        
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.innerHTML = `
+            <span class="frase-es">${es}</span>
+            <button class="btn-mic" id="btn-${index}" onclick="iniciarGravacao(${index})">
+                🎤 Clique para falar
+            </button>
+            <div class="feedback" id="feedback-${index}"></div>
+            <div class="traduccion" id="trad-${index}">
+                <strong>Tradução:</strong> ${pt}
+            </div>
+        `;
+        listaContainer.appendChild(card);
+    });
+
+    function iniciarGravacao(index) {
+        const btn = document.getElementById(`btn-${index}`);
+        const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+        
+        recognition.lang = 'es-ES';
+        recognition.interimResults = false;
+
+        recognition.onstart = () => {
+            btn.classList.add('listening');
+            btn.innerText = 'Listening...';
+        };
+
+        recognition.onresult = (event) => {
+            const text = event.results[0][0].transcript;
+            comparar(frases[index][0], text, `feedback-${index}`, `trad-${index}`);
+        };
+
+        recognition.onerror = () => {
+            alert("Erro ao acessar microfone ou reconhecimento.");
+        };
+
+        recognition.onend = () => {
+            btn.classList.remove('listening');
+            btn.innerText = '🎤 Clique para falar de novo';
+        };
+
+        recognition.start();
+    }
+</script>
+
+</body>
+</html>
