@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Voz Luno - Prática Aeroporto</title>
+    <title>Treinando Frases Curtas</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -146,6 +146,26 @@
 
     function iniciarGravacao(index) {
         const btn = document.getElementById(`btn-${index}`);
+        
+        // Se ainda não validou a permissão nesta sessão, valida antes de começar
+        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia && !permissaoConcedida) {
+            navigator.mediaDevices.getUserMedia({ audio: true })
+                .then(function(stream) {
+                    permissaoConcedida = true;
+                    // Desliga o microfone de teste imediatamente, pois só queríamos a validação
+                    stream.getTracks().forEach(track => track.stop());
+                    executarReconhecimento(index, btn);
+                })
+                .catch(function(err) {
+                    alert("Para praticar, você precisa permitir o uso do microfone nas configurações.");
+                });
+        } else {
+            executarReconhecimento(index, btn);
+        }
+    }
+
+    // Processa o reconhecimento de voz com os textos já em Português
+    function executarReconhecimento(index, btn) {
         const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
         
         recognition.lang = 'es-ES';
@@ -153,7 +173,7 @@
 
         recognition.onstart = () => {
             btn.classList.add('listening');
-            btn.innerText = 'Listening...';
+            btn.innerText = 'Ouvindo... Fale agora';
         };
 
         recognition.onresult = (event) => {
@@ -162,7 +182,7 @@
         };
 
         recognition.onerror = () => {
-            alert("Erro ao acessar microfone ou reconhecimento.");
+            alert("Não consegui ouvir. Verifique o microfone ou tente novamente.");
         };
 
         recognition.onend = () => {
