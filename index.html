@@ -146,26 +146,6 @@
 
     function iniciarGravacao(index) {
         const btn = document.getElementById(`btn-${index}`);
-        
-        // Se ainda não validou a permissão nesta sessão, valida antes de começar
-        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia && !permissaoConcedida) {
-            navigator.mediaDevices.getUserMedia({ audio: true })
-                .then(function(stream) {
-                    permissaoConcedida = true;
-                    // Desliga o microfone de teste imediatamente, pois só queríamos a validação
-                    stream.getTracks().forEach(track => track.stop());
-                    executarReconhecimento(index, btn);
-                })
-                .catch(function(err) {
-                    alert("Para praticar, você precisa permitir o uso do microfone nas configurações.");
-                });
-        } else {
-            executarReconhecimento(index, btn);
-        }
-    }
-
-    // Processa o reconhecimento de voz com os textos já em Português
-    function executarReconhecimento(index, btn) {
         const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
         
         recognition.lang = 'es-ES';
@@ -181,8 +161,13 @@
             comparar(frases[index][0], text, `feedback-${index}`, `trad-${index}`);
         };
 
-        recognition.onerror = () => {
-            alert("Não consegui ouvir. Verifique o microfone ou tente novamente.");
+        recognition.onerror = (event) => {
+            // Se o erro for por falta de permissão, ele vai avisar de forma limpa
+            if(event.error === 'not-allowed') {
+                alert("Por favor, garanta que o microfone está ativo nas configurações do app.");
+            } else {
+                alert("Não consegui ouvir claramente. Tente novamente!");
+            }
         };
 
         recognition.onend = () => {
@@ -190,7 +175,11 @@
             btn.innerText = '🎤 Clique para falar de novo';
         };
 
-        recognition.start();
+        try {
+            recognition.start();
+        } catch (e) {
+            alert("Erro ao iniciar o microfone: " + e.message);
+        }
     }
 </script>
 
